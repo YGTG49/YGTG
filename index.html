@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Screen discussion avec Nash</title>
+  <style>
+    body {
+      background-color: #000;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    img {
+      max-width: 90%;
+      max-height: 90%;
+    }
+  </style>
+  <script>
+    let timeout = 10;
+    window.onload = function () {
+      setTimeout(() => {
+        document.body.innerHTML = "<h1 style='color:white;text-align:center;'>Temps écoulé</h1>";
+      }, timeout * 1000);
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        document.body.innerHTML = "<h1 style='color:red;text-align:center;'>Suspicion de capture d’écran</h1>";
+      }
+    });
+  </script>
+</head>
+<body>
+  <img src="screen-discussion-avec-nash-image.png" alt="Image temporaire">
+</body>
+</html>
