@@ -1,38 +1,329 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Screen discussion avec Nash</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campagnes Email Transactionnelles</title>
   <style>
-    body {
-      background-color: #000;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+    :root {
+      color-scheme: light dark;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --border: rgba(148, 163, 184, 0.4);
     }
-    img {
-      max-width: 90%;
-      max-height: 90%;
+
+    body {
+      margin: 0;
+      padding: 2rem;
+      background: radial-gradient(circle at top, rgba(37, 99, 235, 0.08), transparent 60%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app {
+      width: min(1100px, 100%);
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2.5rem;
+      box-shadow: 0 25px 80px rgba(15, 23, 42, 0.15);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+      color: #0f172a;
+    }
+
+    p.lead {
+      color: #475569;
+      margin-bottom: 2rem;
+    }
+
+    form {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    label {
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    select,
+    textarea {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      font-family: inherit;
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .templates {
+      background: rgba(241, 245, 249, 0.7);
+      border-radius: 14px;
+      padding: 1.25rem;
+      border: 1px dashed var(--border);
+    }
+
+    .dropzone {
+      border: 2px dashed var(--accent);
+      padding: 1.5rem;
+      border-radius: 14px;
+      text-align: center;
+      color: #1d4ed8;
+      background: rgba(37, 99, 235, 0.05);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    button {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 0.9rem 2.4rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+      transform: translateY(-1px);
+    }
+
+    .status {
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      font-size: 0.95rem;
+      display: none;
+    }
+
+    .status.visible {
+      display: block;
+    }
+
+    .status.success {
+      background: rgba(22, 163, 74, 0.12);
+      border: 1px solid rgba(22, 163, 74, 0.35);
+      color: #166534;
+    }
+
+    .status.error {
+      background: rgba(220, 38, 38, 0.12);
+      border: 1px solid rgba(220, 38, 38, 0.35);
+      color: #991b1b;
+    }
+
+    code {
+      font-family: "SFMono-Regular", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: rgba(15, 23, 42, 0.04);
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.4rem;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1.5rem;
+      }
+      .app {
+        padding: 1.5rem;
+      }
     }
   </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Gestionnaire d'envoi d'e-mails</h1>
+    <p class="lead">
+      Téléchargez un fichier CSV contenant vos destinataires et choisissez un template pour déclencher un envoi via l'API <code>/send</code>.
+    </p>
+
+    <div id="status" class="status" role="status"></div>
+
+    <form id="emailForm">
+      <div class="grid two">
+        <div class="field">
+          <label for="sender">Expéditeur</label>
+          <input type="email" id="sender" name="sender" placeholder="ex: hello@votre-domaine.com" required />
+        </div>
+        <div class="field">
+          <label for="subject">Sujet</label>
+          <input type="text" id="subject" name="subject" placeholder="Objet de l'e-mail" required />
+        </div>
+      </div>
+
+      <div class="templates">
+        <div class="grid two">
+          <div class="field">
+            <label for="templateSelect">Template prédéfini</label>
+            <select id="templateSelect" name="template_name">
+              <option value="welcome">Bienvenue</option>
+              <option value="event">Invitation évènement</option>
+              <option value="reminder">Relance paiement</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="customTemplateName">Nom personnalisé</label>
+            <input type="text" id="customTemplateName" placeholder="Optionnel" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="templateBody">Contenu HTML du template</label>
+          <textarea id="templateBody" name="template_body"></textarea>
+          <small>Utilisez des variables comme <code>${prenom}</code>, <code>${entreprise}</code> ou <code>${email}</code> qui seront remplacées par les colonnes du CSV.</small>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="csvFile">Destinataires (.csv)</label>
+        <div class="dropzone">
+          <p>Glissez-déposez un fichier ou cliquez pour sélectionner</p>
+          <input type="file" id="csvFile" name="csv_file" accept=".csv" required />
+        </div>
+        <small>Le CSV doit contenir au minimum une colonne <code>email</code>. Les autres colonnes peuvent être utilisées comme variables.</small>
+      </div>
+
+      <div class="actions">
+        <div>
+          <strong>API cible :</strong>
+          <code id="apiEndpoint">/send</code>
+        </div>
+        <button type="submit">Envoyer la campagne</button>
+      </div>
+    </form>
+  </div>
+
   <script>
-    let timeout = 10;
-    window.onload = function () {
-      setTimeout(() => {
-        document.body.innerHTML = "<h1 style='color:white;text-align:center;'>Temps écoulé</h1>";
-      }, timeout * 1000);
+    const templates = {
+      welcome: {
+        subject: "Bienvenue ${prenom}!",
+        body: `<h2>Bonjour ${prenom},</h2><p>Merci d'avoir rejoint ${entreprise}. Nous sommes ravis de vous compter parmi nous.</p><p>À bientôt !</p>`
+      },
+      event: {
+        subject: "Invitation : ${evenement}",
+        body: `<h2>Bonjour ${prenom},</h2><p>Vous êtes invité(e) à <strong>${evenement}</strong> le ${date}.</p><p>Confirmez votre présence en répondant à cet e-mail.</p>`
+      },
+      reminder: {
+        subject: "Relance - facture ${facture}",
+        body: `<p>Bonjour ${prenom},</p><p>Notre service comptabilité n'a pas encore reçu le règlement de la facture ${facture} arrivée à échéance le ${echeance}.</p><p>Merci de nous indiquer quand le paiement sera effectué.</p>`
+      }
     };
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        document.body.innerHTML = "<h1 style='color:red;text-align:center;'>Suspicion de capture d’écran</h1>";
+
+    const form = document.getElementById('emailForm');
+    const templateSelect = document.getElementById('templateSelect');
+    const customTemplateName = document.getElementById('customTemplateName');
+    const templateBody = document.getElementById('templateBody');
+    const subjectInput = document.getElementById('subject');
+    const statusBox = document.getElementById('status');
+    const apiEndpoint = document.getElementById('apiEndpoint');
+
+    const baseUrl = (window.API_BASE_URL || '').replace(/\/$/, '');
+    const endpoint = `${baseUrl}/send`;
+    apiEndpoint.textContent = endpoint;
+
+    function fillTemplate(name) {
+      const tpl = templates[name];
+      if (!tpl) return;
+      subjectInput.value = tpl.subject;
+      templateBody.value = tpl.body;
+    }
+
+    templateSelect.addEventListener('change', (event) => {
+      fillTemplate(event.target.value);
+      if (!customTemplateName.value) {
+        customTemplateName.value = event.target.value;
+      }
+    });
+
+    fillTemplate(templateSelect.value);
+    customTemplateName.value = templateSelect.value;
+
+    function showStatus(message, type = 'success') {
+      statusBox.textContent = message;
+      statusBox.className = `status visible ${type}`;
+    }
+
+    function buildFormData() {
+      const formData = new FormData();
+      formData.append('sender', form.sender.value);
+      formData.append('subject', form.subject.value);
+      formData.append('template_name', customTemplateName.value || templateSelect.value);
+      formData.append('template_body', templateBody.value);
+      if (form.csv_file.files.length === 0) {
+        throw new Error('Veuillez sélectionner un fichier CSV.');
+      }
+      formData.append('csv_file', form.csv_file.files[0]);
+      return formData;
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      showStatus('Envoi en cours...', 'success');
+
+      try {
+        const body = buildFormData();
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ detail: response.statusText }));
+          throw new Error(error.detail || 'Une erreur est survenue.');
+        }
+
+        const result = await response.json();
+        showStatus(`Campagne envoyée : ${result.sent} e-mails traités (${result.skipped.length} ignorés).`, 'success');
+      } catch (error) {
+        showStatus(error.message, 'error');
       }
     });
   </script>
-</head>
-<body>
-  <img src="screen-discussion-avec-nash-image.png" alt="Image temporaire">
 </body>
 </html>
